@@ -1,1 +1,4 @@
 *~
+.tmux/plugins
+.tmux/resurrect
+.tmux/sidebar
