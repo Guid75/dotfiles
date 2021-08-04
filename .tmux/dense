@@ -1,0 +1,19 @@
+#new -n classic
+#neww -n first
+#breakp
+#splitw -h -l 43 FOR IKE
+#splitw -v -p 20 ike FOR IKE
+#swapp -D
+#resize-pane -U 10
+#selectp -L FOR IKE
+splitw -h -p 50
+splitw -v -p 66
+splitw -v -p 50
+selectp -U
+selectp -U
+splitw -h -p 50
+selectp -D
+splitw -h -p 50
+selectp -L
+selectp -L
+
