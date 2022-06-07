@@ -1,4 +1,5 @@
 splitw -h -p 50
 splitw -v -p 66
-splitw -v -p 50
+#splitw -v -p 50
 selectp -L
+new-window -d

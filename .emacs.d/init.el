@@ -18,11 +18,25 @@
 ;; remove annoying default pageup/pagedown behavior
 (setq scroll-error-top-bottom t)
 
+(setq vc-follow-symlinks t)
+
 ;; Make the y or n suffice for a yes or no question
 (fset 'yes-or-no-p 'y-or-n-p)
 
 ;; Show matching parenthesis
 (show-paren-mode t)
+
+(set-face-attribute 'default nil :font "Fira Code" :height 102)
+
+;; Set the fixed pitch face
+(set-face-attribute 'fixed-pitch nil :font "Fira Code Retina" :height 110)
+
+;; Set the variable pitch face
+(set-face-attribute 'variable-pitch nil :font "Cantarell" :height 125 :weight 'regular)
+
+;; Transparency
+(set-frame-parameter (selected-frame) 'alpha '(90 . 90))
+(add-to-list 'default-frame-alist '(alpha . (90 . 90)))
 
 ;; full screen toggle using command+[RET]
 (defun toggle-fullscreen ()
@@ -33,10 +47,12 @@
 (global-set-key [(meta return)] 'toggle-fullscreen)
 (toggle-fullscreen)
 
-(set-face-attribute 'default nil :font "Fira Code" :height 102)
 
 (define-key global-map "\C-cc" 'comment-region)
 (define-key global-map "\C-cu" 'uncomment-region)
+
+(define-key global-map "\M-n" 'next-error)
+(define-key global-map "\M-p" 'previous-error)
 
 ;; Initialize package sources
 (require 'package)
@@ -102,10 +118,10 @@
 
 (use-package all-the-icons)
 
-;; (use-package doom-modeline
-;;   :ensure t
-;;   :init (doom-modeline-mode 1)
-;;   :custom ((doom-modeline-height 15)))
+(use-package doom-modeline
+  :ensure t
+  :init (doom-modeline-mode 1)
+  :custom ((doom-modeline-height 15)))
 
 (use-package doom-themes
   :init (load-theme 'doom-dracula t))
@@ -129,6 +145,13 @@
          ("C-x C-f" . counsel-find-file)
          :map minibuffer-local-map
          ("C-r" . 'counsel-minibuffer-history)))
+
+(with-eval-after-load 'counsel
+  (let ((done (where-is-internal #'ivy-done     ivy-minibuffer-map t))
+        (alt  (where-is-internal #'ivy-alt-done ivy-minibuffer-map t)))
+    (define-key counsel-find-file-map done #'ivy-alt-done)
+    (define-key counsel-find-file-map alt  #'ivy-done)))
+
 
 (use-package helpful
   :custom
@@ -165,16 +188,20 @@
   ("k" text-scale-decrease "out")
   ("f" nil "finished" :exit t))
 
-(defhydra magit (global-map "C-c m")
+(defhydra js2r (global-map "C-c j")
   "zoom"
-  ("j" text-scale-increase "in")
-  ("k" text-scale-decrease "out")
-  ("f" nil "finished" :exit t))
+  ("c" js2r-extract-const)
+  ("f" js2r-extract-function))
 
 ;; (rune/leader-keys
 ;;   "ts" '(hydra-text-scale/body :which-key "scale text"))
 
 (use-package magit)
+
+;; Install delta for the following to work : https://github.com/dandavison/delta#installation
+(use-package magit-delta
+  :ensure t
+  :hook (magit-mode . magit-delta-mode))
 
 (use-package ligature
   :load-path "manual/ligature.el/"
@@ -204,8 +231,8 @@
     (exec-path-from-shell-initialize)))
 
 (use-package prettier-js)
-  ;; :config
-  ;; (add-hook 'js-mode-hook 'prettier-js-mode))
+;;   ;; :config
+;;   ;; (add-hook 'js-mode-hook 'prettier-js-mode))
 
 
 (add-hook 'js-mode-hook 'add-node-modules-path)
@@ -255,13 +282,29 @@
 
   ;; Set up proper indentation in JavaScript and JSON files
   (add-hook 'js2-mode-hook #'dw/set-js-indentation)
-  (add-hook 'json-mode-hook #'dw/set-js-indentation))
+  (add-hook 'json-mode-hook #'dw/set-js-indentation)
+	(electric-pair-mode))
+
 
 (use-package js2-refactor
 	:hook (js2-mode . js2-refactor-mode)
 	:config
 	(js2r-add-keybindings-with-prefix "C-c C-m")
 	)
+
+;; (add-hook 'after-init-hook #'global-flycheck-mode)
+
+;; use local eslint from node_modules before global
+;; http://emacs.stackexchange.com/questions/21205/flycheck-with-file-relative-eslint-executable
+;; (defun my/use-eslint-from-node-modules ()
+;;   (let* ((root (locate-dominating-file
+;;                 (or (buffer-file-name) default-directory)
+;;                 "node_modules"))
+;;          (eslint (and root
+;;                       (expand-file-name "node_modules/eslint/bin/eslint.js"
+;;                                         root))))
+;;     (when (and eslint (file-executable-p eslint))
+;;       (setq-local flycheck-javascript-eslint-executable eslint))))
 
 (use-package flycheck
   :defer t
@@ -276,12 +319,15 @@
   :commands lsp
   :hook ((typescript-mode js2-mode web-mode) . lsp)
   :bind (:map lsp-mode-map
-							("M-<space>" . completion-at-point)
-							("M-." . lsp-find-definition)
-							)
+	      ("M-<space>" . completion-at-point)
+	      ;;							("M-." . lsp-find-definition)
+	      )
   :custom (lsp-headerline-breadcrumb-enable nil)
   :config
 	(global-set-key (kbd "<f2>") 'lsp-rename))
+	;; (add-hook #'ace-jump-mode))
+
+;; (add-hook 'flycheck-mode-hook #'my/use-eslint-from-node-modules)
 
 ;; (use-package lsp-mode
 ;;   :hook ((c-mode          ; clangd
@@ -326,7 +372,7 @@
 
 (use-package lsp-ui
   :preface
-  (defun ian/lsp-ui-doc-show ()
+  (defun my/lsp-ui-doc-show ()
     "Sometimes lsp-ui-doc-show needs more than one call to display correctly."
     (interactive)
     (lsp-ui-doc-hide)
@@ -337,8 +383,12 @@
   (lsp-ui-doc-background ((t (:background nil))))
   (lsp-ui-doc-header ((t (:inherit (font-lock-string-face italic)))))
   :config
-  (define-key lsp-ui-mode-map (kbd "C-c l s") #'ian/lsp-ui-doc-show)
+  (define-key lsp-ui-mode-map (kbd "C-c l s") #'my/lsp-ui-doc-show)
   (define-key lsp-ui-mode-map (kbd "C-c l h") #'lsp-ui-doc-hide)
+  (define-key lsp-ui-mode-map (kbd "C-c l p") #'lsp-ui-peek-find-references)
+	(define-key lsp-ui-mode-map (kbd "M-.") #'lsp-ui-peek-find-definitions)
+;;	(define-key lsp-ui-mode-map [remap xref-find-definitions] #'lsp-ui-peek-find-definitions)
+	(define-key lsp-ui-mode-map [remap xref-find-references] #'lsp-ui-peek-find-references)
   (custom-set-faces '(lsp-ui-sideline-global ((t (:italic t)))))
   (setq lsp-ui-doc-enable nil)
   (setq lsp-ui-doc-header t)
@@ -373,10 +423,12 @@
 
 ;; ripgrep based
 (use-package rg
-  :bind (("C-M-g" . rg-project)))
+  :bind (("C-M-g" . counsel-rg))
+  :custom
+  (rg-ignore-ripgreprc nil))
 	
 ;; enable for all programming modes
-(add-hook 'prog-mode-hook 'subword-mode)
+;;(add-hook 'prog-mode-hook 'subword-mode)
 
 (use-package expand-region
   :bind (("C-;" . er/expand-region)))
@@ -386,3 +438,75 @@
 	(yas-global-mode 1))
 
 (use-package yasnippet-snippets)
+
+(defun my/org-mode-setup ()
+  (org-indent-mode)
+  (variable-pitch-mode 1)
+  (visual-line-mode 1))
+
+(defun my/org-font-setup ()
+  ;; Replace list hyphen with dot
+  (font-lock-add-keywords 'org-mode
+                          '(("^ *\\([-]\\) "
+                             (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+  (dolist (face '((org-level-1 . 1.2)
+                (org-level-2 . 1.1)
+                (org-level-3 . 1.05)
+                (org-level-4 . 1.0)
+                (org-level-5 . 1.1)
+                (org-level-6 . 1.1)
+                (org-level-7 . 1.1)
+                (org-level-8 . 1.1)))
+  (set-face-attribute (car face) nil :font "Cantarell" :weight 'regular :height (cdr face)))
+
+  ;; Ensure that anything that should be fixed-pitch in Org files appears that way
+  (set-face-attribute 'org-block nil :foreground nil :inherit 'fixed-pitch)
+  (set-face-attribute 'org-code nil   :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-table nil   :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
+  (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
+  (set-face-attribute 'org-checkbox nil :inherit 'fixed-pitch))
+
+(use-package org
+  :hook (org-mode . my/org-mode-setup)
+  :config
+  (setq org-ellipsis " ▾")
+	(setq org-agenda-start-with-log-mode t)
+	(setq org-log-done 'time)
+	(setq org-log-into-drawer t)
+
+	(setq org-agenda-files
+	      '("~/Tasks.org"
+		))
+	
+  (my/org-font-setup)
+	(setq org-todo-keywords
+				'((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d!)")
+					(sequence "BACKLOG(b)" "PLAN(p)" "READY(r)" "ACTIVE(a)" "REVIEW(v)" "WAIT(w@/!)" "HOLD(h)" "|" "COMPLETED(c)" "CANC(k@)"))))
+
+(use-package org-bullets
+  :after org
+  :hook (org-mode . org-bullets-mode)
+  :custom
+  (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
+
+(defun my/org-mode-visual-fill ()
+  (setq visual-fill-column-width 100
+        visual-fill-column-center-text t)
+  (visual-fill-column-mode 1))
+
+(use-package visual-fill-column
+  :hook (org-mode . my/org-mode-visual-fill))
+
+(use-package yaml-mode)
+(put 'downcase-region 'disabled nil)
+
+(save-place-mode 1)
+
+(use-package flymake-shellcheck
+  :commands flymake-shellcheck-load
+  :init
+  (add-hook 'sh-mode-hook 'flymake-shellcheck-load))
+
+(setq create-lockfiles nil)
