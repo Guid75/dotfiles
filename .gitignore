@@ -2,3 +2,5 @@
 .tmux/plugins
 .tmux/resurrect
 .tmux/sidebar
+.emacs.d/*
+!.emacs.d/init.el
