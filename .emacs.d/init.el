@@ -13,7 +13,7 @@
 (delete-selection-mode)
 
 ;; M-arrows for switching windows
-(windmove-default-keybindings 'meta)
+(windmove-default-keybindings 'super)
 
 ;; remove annoying default pageup/pagedown behavior
 (setq scroll-error-top-bottom t)
@@ -510,3 +510,5 @@
   (add-hook 'sh-mode-hook 'flymake-shellcheck-load))
 
 (setq create-lockfiles nil)
+(use-package move-text)
+(move-text-default-bindings)
