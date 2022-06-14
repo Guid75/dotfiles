@@ -33,7 +33,6 @@ zinit ice depth=1; zinit light romkatv/powerlevel10k
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-zinit light lukechilds/zsh-nvm
 zinit light yonchu/grunt-zsh-completion
 zinit light agkozak/zsh-z
 
@@ -65,10 +64,6 @@ setopt HIST_BEEP
 
 # Partial completion
 zstyle ':completion:*' matcher-list 'r:|=*' 'l:|=* r:|=*'
-
-# export NVM_DIR="$HOME/.nvm"
-# [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-# [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
 alias top='/usr/bin/top -o %CPU'
 alias xclip='xclip -selection c'
@@ -151,11 +146,11 @@ export LESS="-FRXI"
 
 export RIPGREP_CONFIG_PATH=~/.ripgreprc
 
-fpath=(~/tools/rg-completion $fpath)
+fpath=(~/.zsh/functions $fpath)
+
 
 export VOLTA_HOME="$HOME/.volta"
 export PATH="$VOLTA_HOME/bin:$PATH"
 
-fpath=(~/.zsh/functions $fpath)
 
 source ~/.zshrc.work 2>/dev/null
