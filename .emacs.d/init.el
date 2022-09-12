@@ -13,7 +13,7 @@
 (delete-selection-mode)
 
 ;; M-arrows for switching windows
-(windmove-default-keybindings 'super)
+(windmove-default-keybindings 'meta)
 
 ;; remove annoying default pageup/pagedown behavior
 (setq scroll-error-top-bottom t)
@@ -199,9 +199,10 @@
 (use-package magit)
 
 ;; Install delta for the following to work : https://github.com/dandavison/delta#installation
-(use-package magit-delta
-  :ensure t
-  :hook (magit-mode . magit-delta-mode))
+;; magit-delta is SLOW with big changes => too bad :(
+;; (use-package magit-delta
+;;   :ensure t
+;;   :hook (magit-mode . magit-delta-mode))
 
 (use-package ligature
   :load-path "manual/ligature.el/"
@@ -230,21 +231,14 @@
   (when (memq window-system '(mac ns x))
     (exec-path-from-shell-initialize)))
 
-(use-package prettier-js)
-;;   ;; :config
-;;   ;; (add-hook 'js-mode-hook 'prettier-js-mode))
-
+(use-package prettier-js
+  :config
+  (add-hook 'js-mode-hook 'prettier-js-mode)
+  (add-hook 'js2-mode-hook 'prettier-js-mode)
+  (add-hook 'typescript-mode-hook 'prettier-js-mode)
+  )
 
 (add-hook 'js-mode-hook 'add-node-modules-path)
-(add-hook 'js-mode-hook 'prettier-js-mode)
-
-;; (eval-after-load 'js-mode
-;;     '(progn
-;;        (add-hook 'js-mode-hook #'add-node-modules-path)
-;;        (add-hook 'js-mode-hook #'prettier-js-mode)))
-
-;; (eval-after-load 'js-mode
-;;    '(add-hook 'js-mode-hook #'add-node-modules-path))
 
 (use-package markdown-mode)
 
@@ -262,7 +256,7 @@
 	(add-to-list 'projectile-globally-ignored-files "webui/synapse/bootstrap*"))
 
 (use-package typescript-mode
-  :mode "\\.ts\\'"
+  :mode ("\\.ts\\'" "\\.tsx\\'")
   :config
   (setq typescript-indent-level 2))
 
@@ -431,7 +425,7 @@
 ;;(add-hook 'prog-mode-hook 'subword-mode)
 
 (use-package expand-region
-  :bind (("C-;" . er/expand-region)))
+  :bind (("C-=" . er/expand-region)))
 
 (use-package yasnippet
 	:config
@@ -511,4 +505,60 @@
 
 (setq create-lockfiles nil)
 (use-package move-text)
-(move-text-default-bindings)
+(global-set-key [s-up] 'move-text-up)
+(global-set-key [s-down] 'move-text-down)
+;(move-text-default-bindings)
+
+(setq backup-directory-alist `(("." . "~/.saves")))
+
+(use-package bufler
+  :bind (("C-x C-b" . bufler)
+         ("C-x b" . bufler-switch-buffer)))
+
+(use-package perspective
+  :bind
+  ("C-x C-b" . persp-list-buffers)         ; or use a nicer switcher, see below
+  :custom
+  (persp-mode-prefix-key (kbd "C-c M-p"))  ; pick your own prefix key here
+  :init
+  (persp-mode))
+
+(use-package treemacs
+  :ensure t
+  :defer t
+  :init
+  :config
+  (progn
+    (setq treemacs-collapse-dirs                   (if treemacs-python-executable 3 0)
+          treemacs-deferred-git-apply-delay        0.5
+          treemacs-file-event-delay                1000)
+
+    ;; The default width and height of the icons is 22 pixels. If you are
+    ;; using a Hi-DPI display, uncomment this to double the icon size.
+    ;;(treemacs-resize-icons 44)
+
+    (treemacs-follow-mode t)
+    (treemacs-filewatch-mode t)
+    (treemacs-fringe-indicator-mode 'always)
+
+    (treemacs-hide-gitignored-files-mode nil))
+  :bind
+  (:map global-map
+        ("M-0"       . treemacs-select-window)
+        ("C-x t 1"   . treemacs-delete-other-windows)
+        ("C-x t t"   . treemacs)
+        ("C-x t d"   . treemacs-select-directory)
+        ("C-x t B"   . treemacs-bookmark)
+        ("C-x t C-t" . treemacs-find-file)
+        ("C-x t M-t" . treemacs-find-tag)))
+
+(defun copy-and-comment-region (beg end &optional arg)
+  "Duplicate the region and comment-out the copied text.
+See `comment-region' for behavior of a prefix arg."
+  (interactive "r\nP")
+  (copy-region-as-kill beg end)
+  (goto-char end)
+  (yank)
+  (comment-region beg end arg))
+
+(define-key global-map "\C-ck" 'copy-and-comment-region)
