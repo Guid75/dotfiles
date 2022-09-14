@@ -238,6 +238,8 @@
   (add-hook 'typescript-mode-hook 'prettier-js-mode)
   )
 
+(use-package add-node-modules-path)
+
 (add-hook 'js-mode-hook 'add-node-modules-path)
 
 (use-package markdown-mode)
@@ -258,7 +260,8 @@
 (use-package typescript-mode
   :mode ("\\.ts\\'" "\\.tsx\\'")
   :config
-  (setq typescript-indent-level 2))
+  (setq typescript-indent-level 2)
+  )
 
 (defun dw/set-js-indentation ()
   (setq js-indent-level 2)
@@ -277,7 +280,7 @@
   ;; Set up proper indentation in JavaScript and JSON files
   (add-hook 'js2-mode-hook #'dw/set-js-indentation)
   (add-hook 'json-mode-hook #'dw/set-js-indentation)
-	(electric-pair-mode))
+  (electric-pair-mode))
 
 
 (use-package js2-refactor
@@ -314,7 +317,7 @@
   :hook ((typescript-mode js2-mode web-mode) . lsp)
   :bind (:map lsp-mode-map
 	      ("M-<space>" . completion-at-point)
-	      ;;							("M-." . lsp-find-definition)
+	      ("M-C-f" . lsp-find-references)
 	      )
   :custom (lsp-headerline-breadcrumb-enable nil)
   :config
