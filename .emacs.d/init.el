@@ -240,7 +240,8 @@
 
 (use-package add-node-modules-path)
 
-(add-hook 'js-mode-hook 'add-node-modules-path)
+(add-hook 'js2-mode-hook 'add-node-modules-path)
+(add-hook 'typescript-mode-hook 'add-node-modules-path)
 
 (use-package markdown-mode)
 
@@ -321,7 +322,9 @@
 	      )
   :custom (lsp-headerline-breadcrumb-enable nil)
   :config
-	(global-set-key (kbd "<f2>") 'lsp-rename))
+	(global-set-key (kbd "<f2>") 'lsp-rename)
+	(global-set-key (kbd "<f5>") 'lsp-execute-code-action))
+
 	;; (add-hook #'ace-jump-mode))
 
 ;; (add-hook 'flycheck-mode-hook #'my/use-eslint-from-node-modules)
@@ -565,3 +568,22 @@ See `comment-region' for behavior of a prefix arg."
   (comment-region beg end arg))
 
 (define-key global-map "\C-ck" 'copy-and-comment-region)
+
+(use-package dired-toggle
+  :defer t
+  :bind (("<f1>" . #'dired-toggle)
+         :map dired-mode-map
+         ("q" . #'dired-toggle-quit)
+         ([remap dired-find-file] . #'dired-toggle-find-file)
+         ([remap dired-up-directory] . #'dired-toggle-up-directory)
+         ("C-c C-u" . #'dired-toggle-up-directory))
+  :config
+  (setq dired-toggle-window-size 32)
+  (setq dired-toggle-window-side 'left)
+
+  ;; Optional, enable =visual-line-mode= for our narrow dired buffer:
+  (add-hook 'dired-toggle-mode-hook
+            (lambda () (interactive)
+              (visual-line-mode 1)
+              (setq-local visual-line-fringe-indicators '(nil right-curly-arrow))
+              (setq-local word-wrap nil))))
