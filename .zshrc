@@ -119,9 +119,56 @@ ediff() {
     emacs --eval "(ediff-files \"$1\" \"$2\")"
 }
 
+gbh() {
+    git reflog | grep checkout: | sed -r 's/^.+ moving from [^[:space:]]+ to ([^[:space:]]+)/\1/' | awk '{ if (!h[$0]) { print $0; h[$0]=1 } }' | head -n 10
+}
+
+
+subzip() {
+		local movie_base
+		local srt_path
+		local extension
+		local file
+    get_first_movie_filename() {
+        for file in *; do
+						movie_base="${file%.*}"
+						extension="${file##*.}"
+						case "$extension" in
+								mp4|mkv) return 0;;
+						esac
+				done
+		}
+
+		local zip_file="$1"
+    local zip_base=`basename "${zip_file}"`
+    local tmp_dir=`mktemp -d`
+    unzip -q "$zip_file" -d "$tmp_dir"
+
+    get_first_srt_filename() {
+        for file in ${tmp_dir}/*; do
+						srt_path="${file%.*}"
+						extension="${file##*.}"
+						case "$extension" in
+ 								srt) return 0;;
+						esac
+				done
+		}
+
+		get_first_srt_filename
+    get_first_movie_filename
+    local srt_base=`basename "${srt_path}"`
+		if test -f "${movie_base}.srt"; then
+				mv "${movie_base}.srt" "${movie_base}.srt.bak"
+		fi
+
+		cp "${srt_path}.srt" "${movie_base}.srt"
+    rm -rf "$tmp_dir"
+    rm "$zip_file"
+}
+
 export EDITOR=/usr/bin/joe
 
-export PATH=${PATH}:/opt/java/bin:/opt/ruby1.9/bin:/home/gdenry/.cargo/bin:/home/gdenry/bin
+export PATH=${PATH}:/opt/java/bin:/opt/ruby1.9/bin:/home/gdenry/.cargo/bin:/home/gdenry/bin:~/bin/Logseq-linux-x64
 
 export LESS_TERMCAP_mb=$'\E[01;31m'
 export LESS_TERMCAP_md=$'\E[01;31m'
